@@ -1,13 +1,16 @@
 
 import { useState } from "react";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { AIStockAnalysis } from "@/components/ai/AIStockAnalysis";
+import { AIRecommendationCard } from "@/components/ai/AIRecommendationCard";
 
 export const StockSearchBar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSector, setSelectedSector] = useState("");
+  const [showAIAnalysis, setShowAIAnalysis] = useState(false);
   
   const popularStocks = [
     "RELIANCE", "TCS", "HDFCBANK", "INFY", "ITC", "SBIN", "BHARTIARTL", "LT"
@@ -19,6 +22,29 @@ export const StockSearchBar = () => {
 
   const handleStockClick = (stock: string) => {
     setSearchQuery(stock);
+    setShowAIAnalysis(true);
+  };
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      setShowAIAnalysis(true);
+    }
+  };
+
+  // Mock stock data - in real app, this would come from an API
+  const getStockData = (symbol: string) => {
+    const stockData = {
+      'RELIANCE': { name: 'Reliance Industries Ltd', price: 2485.50, exchange: 'NSE' },
+      'TCS': { name: 'Tata Consultancy Services', price: 3567.20, exchange: 'NSE' },
+      'HDFCBANK': { name: 'HDFC Bank Ltd', price: 1634.75, exchange: 'NSE' },
+      'INFY': { name: 'Infosys Ltd', price: 1456.30, exchange: 'NSE' },
+      'ITC': { name: 'ITC Ltd', price: 456.80, exchange: 'NSE' },
+    };
+    return stockData[symbol as keyof typeof stockData] || { 
+      name: `${symbol} Company`, 
+      price: 1000, 
+      exchange: 'NSE' 
+    };
   };
 
   return (
@@ -29,15 +55,27 @@ export const StockSearchBar = () => {
           placeholder="Search stocks by name, symbol, or ISIN (e.g., RELIANCE, TCS, HDFCBANK)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-12 pr-20 py-4 text-lg bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-orange-500 focus:ring-orange-500"
+          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          className="pl-12 pr-32 py-4 text-lg bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-orange-500 focus:ring-orange-500"
         />
-        <Button
-          size="sm"
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-orange-600 hover:bg-orange-700"
-        >
-          <Filter className="w-4 h-4 mr-2" />
-          Filter
-        </Button>
+        <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-slate-600 text-slate-300 hover:bg-slate-700"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            Filter
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleSearch}
+            className="bg-orange-600 hover:bg-orange-700"
+          >
+            <Brain className="w-4 h-4 mr-2" />
+            AI Analyze
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -74,14 +112,46 @@ export const StockSearchBar = () => {
         </div>
       </div>
 
-      {searchQuery && (
-        <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
-          <p className="text-slate-300">
-            Searching for: <span className="text-orange-500 font-semibold">{searchQuery}</span>
-          </p>
-          <p className="text-sm text-slate-400 mt-1">
-            AI analysis will be displayed here with technical, fundamental, and sentiment insights.
-          </p>
+      {showAIAnalysis && searchQuery && (
+        <div className="space-y-6">
+          <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-white">
+                  AI Analysis for: <span className="text-orange-500">{searchQuery}</span>
+                </h3>
+                <p className="text-sm text-slate-400">
+                  Comprehensive AI-powered stock analysis with technical, fundamental, and sentiment insights
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAIAnalysis(false)}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <AIStockAnalysis
+                stockSymbol={searchQuery}
+                exchange={getStockData(searchQuery).exchange}
+                companyName={getStockData(searchQuery).name}
+              />
+            </div>
+            <div>
+              <AIRecommendationCard
+                stockSymbol={searchQuery}
+                exchange={getStockData(searchQuery).exchange}
+                companyName={getStockData(searchQuery).name}
+                currentPrice={getStockData(searchQuery).price}
+              />
+            </div>
+          </div>
         </div>
       )}
     </div>

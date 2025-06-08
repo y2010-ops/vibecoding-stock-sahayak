@@ -10,13 +10,15 @@ import { FeatureCards } from "@/components/indian-market/FeatureCards";
 import { NewsSection } from "@/components/indian-market/NewsSection";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
-import { UserCircle, TrendingUp } from "lucide-react";
+import { UserCircle, TrendingUp, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [user, setUser] = useState(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Check authentication status
   const { data: session } = useQuery({
@@ -59,6 +61,17 @@ const Index = () => {
             
             <div className="flex items-center space-x-4">
               <MarketStatusWidget />
+              
+              <Button
+                onClick={() => navigate('/ai-chat')}
+                variant="outline"
+                size="sm"
+                className="border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                AI Chat
+              </Button>
+              
               {user ? (
                 <div className="flex items-center space-x-3">
                   <span className="text-sm text-slate-300">Welcome, {user.email}</span>
@@ -106,7 +119,7 @@ const Index = () => {
               SEBI Registration Number: Example/2023 | BSE: INE/2023 | NSE: INE/2023
             </p>
             <p className="text-slate-600 text-xs">
-              © 2024 StockMind AI. All rights reserved. | Made in India 🇮🇳
+              © 2024 StockMind AI. All rights reserved. | Made in India 🇮🇳 | Powered by Gemini AI
             </p>
           </div>
         </div>
