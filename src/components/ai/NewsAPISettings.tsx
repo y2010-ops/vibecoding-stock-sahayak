@@ -27,7 +27,7 @@ export const NewsAPISettings = () => {
       description: "600 requests/month • Primary news source",
       signupUrl: "https://currentsapi.services/en",
       docsUrl: "https://currentsapi.services/en/docs/",
-      color: "bg-blue-500",
+      color: "bg-blue-500 dark:bg-blue-600",
       status: "Active"
     },
     {
@@ -36,7 +36,7 @@ export const NewsAPISettings = () => {
       description: "100 requests/day • Secondary backup source",
       signupUrl: "https://gnews.io/",
       docsUrl: "https://gnews.io/docs/v4",
-      color: "bg-green-500",
+      color: "bg-green-500 dark:bg-green-600",
       status: "Active"
     },
     {
@@ -45,7 +45,7 @@ export const NewsAPISettings = () => {
       description: "5 requests/minute • Stock-specific news with sentiment",
       signupUrl: "https://www.alphavantage.co/support/#api-key",
       docsUrl: "https://www.alphavantage.co/documentation/#news-sentiment",
-      color: "bg-purple-500",
+      color: "bg-purple-500 dark:bg-purple-600",
       status: "Active"
     }
   ];
@@ -58,28 +58,28 @@ export const NewsAPISettings = () => {
   };
 
   return (
-    <Card className="bg-slate-800/50 border-slate-700">
+    <Card className="bg-card/50 border-border backdrop-blur-sm">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-white">
+        <CardTitle className="flex items-center gap-2 text-foreground">
           <Settings className="w-5 h-5" />
           Enhanced News API Configuration
         </CardTitle>
-        <p className="text-slate-400 text-sm">
+        <p className="text-muted-foreground text-sm">
           All news APIs are now configured and active for comprehensive market coverage
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
         {apiSources.map((api) => (
-          <div key={api.key} className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg border border-slate-700">
+          <div key={api.key} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border">
             <div className="flex items-center space-x-4">
               <div className={`w-3 h-3 rounded-full ${api.color}`} />
               <div>
-                <h3 className="font-medium text-white">{api.name}</h3>
-                <p className="text-sm text-slate-400">{api.description}</p>
+                <h3 className="font-medium text-foreground">{api.name}</h3>
+                <p className="text-sm text-muted-foreground">{api.description}</p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Badge variant="default" className="bg-green-600">
+              <Badge variant="default" className="bg-green-600 dark:bg-green-700">
                 <CheckCircle className="w-3 h-3 mr-1" />
                 {api.status}
               </Badge>
@@ -96,12 +96,12 @@ export const NewsAPISettings = () => {
           </div>
         ))}
         
-        <div className="mt-6 p-4 bg-green-900/20 border border-green-700/50 rounded-lg">
+        <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700/50 rounded-lg">
           <div className="flex items-start space-x-2">
-            <CheckCircle className="w-4 h-4 text-green-400 mt-0.5" />
+            <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5" />
             <div className="text-sm">
-              <p className="text-green-200 font-medium">✅ All Systems Active:</p>
-              <ul className="text-green-300/80 mt-1 space-y-1 text-xs">
+              <p className="text-green-800 dark:text-green-200 font-medium">✅ All Systems Active:</p>
+              <ul className="text-green-700 dark:text-green-300/80 mt-1 space-y-1 text-xs">
                 <li>• Multi-source news aggregation enabled</li>
                 <li>• Smart fallback system operational</li>
                 <li>• Enhanced categorization and sentiment analysis</li>
@@ -111,12 +111,12 @@ export const NewsAPISettings = () => {
           </div>
         </div>
 
-        <div className="mt-4 p-4 bg-orange-900/20 border border-orange-700/50 rounded-lg">
+        <div className="mt-4 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700/50 rounded-lg">
           <div className="flex items-start space-x-2">
-            <Globe className="w-4 h-4 text-orange-400 mt-0.5" />
+            <Globe className="w-4 h-4 text-orange-600 dark:text-orange-400 mt-0.5" />
             <div className="text-sm">
-              <p className="text-orange-200 font-medium">Ready to Use:</p>
-              <ul className="text-orange-300/80 mt-1 space-y-1 text-xs">
+              <p className="text-orange-800 dark:text-orange-200 font-medium">Ready to Use:</p>
+              <ul className="text-orange-700 dark:text-orange-300/80 mt-1 space-y-1 text-xs">
                 <li>• Ask for "latest market news" for comprehensive coverage</li>
                 <li>• Request specific company news: "TCS latest updates"</li>
                 <li>• Try sector queries: "Banking sector news today"</li>

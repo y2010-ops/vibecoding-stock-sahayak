@@ -112,14 +112,14 @@ export const AIChatAssistant = () => {
 
   return (
     <div className="relative animate-fade-in">
-      <div className="bg-slate-900/70 rounded-3xl shadow-xl border border-slate-700 overflow-hidden flex flex-col min-h-[520px] max-h-[75vh]">
+      <div className="bg-card/70 backdrop-blur-sm rounded-3xl shadow-xl border border-border overflow-hidden flex flex-col min-h-[520px] max-h-[75vh]">
         {/* Header */}
-        <div className="flex items-center gap-2 px-6 py-5 border-b border-slate-700 bg-gradient-to-r from-slate-900/80 via-slate-800/90 to-orange-900/20">
-          <TrendingUp className="w-7 h-7 text-orange-500 drop-shadow" />
-          <span className="text-xl font-extrabold bg-gradient-to-r from-orange-400 via-yellow-300 to-orange-700 bg-clip-text text-transparent tracking-wide">
+        <div className="flex items-center gap-2 px-6 py-5 border-b border-border bg-gradient-to-r from-card/80 via-card/90 to-primary/5">
+          <TrendingUp className="w-7 h-7 text-primary drop-shadow" />
+          <span className="text-xl font-extrabold bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent tracking-wide">
             StockMind AI Assistant
           </span>
-          <div className="ml-auto flex items-center gap-1 text-xs text-green-400">
+          <div className="ml-auto flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
             <Globe className="w-3 h-3" />
             <span>Live Data</span>
           </div>
@@ -127,7 +127,7 @@ export const AIChatAssistant = () => {
 
         {/* Chat Area */}
         <div className="flex-1 flex flex-col p-0">
-          <ScrollArea className="flex-1 w-full h-full px-4 sm:px-6 py-5 overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500/60"
+          <ScrollArea className="flex-1 w-full h-full px-4 sm:px-6 py-5 overflow-y-auto scrollbar-thin scrollbar-thumb-primary/60"
             style={{ background: "transparent", maxHeight: "55vh" }}
           >
             <div className="space-y-4 pb-6">
@@ -138,11 +138,11 @@ export const AIChatAssistant = () => {
                 >
                   {/* AVATAR */}
                   <div className={`flex flex-col items-center gap-1 ${message.type === 'user' ? 'order-2 ml-2' : 'order-1 mr-2'}`}>
-                    <div className={`rounded-full flex items-center justify-center border-2 ${message.type === 'user' ? 'bg-gradient-to-br from-orange-500 to-orange-700 border-orange-500' : 'bg-gradient-to-br from-blue-600 to-slate-700 border-blue-400'} w-9 h-9`}>
+                    <div className={`rounded-full flex items-center justify-center border-2 ${message.type === 'user' ? 'bg-gradient-to-br from-primary to-primary/80 border-primary' : 'bg-gradient-to-br from-blue-600 to-primary/70 border-blue-400'} w-9 h-9`}>
                       {message.type === 'user' ? (
-                        <MessageCircle className="w-5 h-5 text-white" />
+                        <MessageCircle className="w-5 h-5 text-primary-foreground" />
                       ) : (
-                        <TrendingUp className="w-5 h-5 text-orange-300" />
+                        <TrendingUp className="w-5 h-5 text-primary-foreground" />
                       )}
                     </div>
                   </div>
@@ -151,19 +151,19 @@ export const AIChatAssistant = () => {
                   <div className={`max-w-[75vw] md:max-w-[60vw] break-words`}>
                     <div className={`p-3 rounded-2xl shadow text-sm md:text-base font-medium 
                       ${message.type === 'user'
-                        ? 'bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 text-white rounded-br-md'
-                        : 'bg-slate-800/95 text-orange-100 rounded-bl-md'
+                        ? 'bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground rounded-br-md'
+                        : 'bg-muted/95 text-foreground rounded-bl-md'
                       }`}>
                       <span className="whitespace-pre-wrap">{message.content}</span>
                       
                       {/* Show metadata for assistant messages */}
                       {message.type === 'assistant' && message.metadata?.webDataUsed && message.metadata.webDataUsed.length > 0 && (
-                        <div className="mt-2 pt-2 border-t border-slate-600/50">
-                          <div className="flex items-center gap-2 text-xs text-slate-400">
-                            <Globe className="w-3 h-3 text-green-400" />
+                        <div className="mt-2 pt-2 border-t border-border/50">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Globe className="w-3 h-3 text-green-600 dark:text-green-400" />
                             <span>Live data: {message.metadata.webDataUsed.join(', ')}</span>
                             {message.metadata.stockSymbol && (
-                              <span className="bg-slate-700 px-2 py-1 rounded text-orange-300">
+                              <span className="bg-secondary px-2 py-1 rounded text-primary">
                                 {message.metadata.stockSymbol}
                               </span>
                             )}
@@ -171,7 +171,7 @@ export const AIChatAssistant = () => {
                         </div>
                       )}
                     </div>
-                    <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {message.timestamp.toLocaleTimeString('en-IN', { 
                         hour: "2-digit", 
@@ -191,11 +191,11 @@ export const AIChatAssistant = () => {
               {/* Loading State */}
               {isLoading && (
                 <div className="flex items-end justify-start group gap-3">
-                  <div className="rounded-full bg-gradient-to-br from-blue-600 to-slate-700 border-2 border-blue-400 w-9 h-9 flex items-center justify-center">
-                    <TrendingUp className="w-5 h-5 text-orange-300 animate-pulse" />
+                  <div className="rounded-full bg-gradient-to-br from-blue-600 to-primary/70 border-2 border-blue-400 w-9 h-9 flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-primary-foreground animate-pulse" />
                   </div>
-                  <div className="bg-slate-800/90 p-3 rounded-2xl rounded-bl-md animate-pulse shadow text-orange-100 flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-green-400 animate-spin" />
+                  <div className="bg-muted/90 p-3 rounded-2xl rounded-bl-md animate-pulse shadow text-foreground flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-green-600 dark:text-green-400 animate-spin" />
                     Fetching live market data...
                   </div>
                 </div>
@@ -205,7 +205,7 @@ export const AIChatAssistant = () => {
           
           {/* Chat Input */}
           <form
-            className="w-full border-t border-slate-700 bg-gradient-to-r from-slate-900/80 to-orange-950/30 px-4 py-5 flex items-center gap-3"
+            className="w-full border-t border-border bg-gradient-to-r from-card/80 to-primary/5 px-4 py-5 flex items-center gap-3"
             onSubmit={e => { e.preventDefault(); sendMessage(); }}
           >
             <input
@@ -214,7 +214,7 @@ export const AIChatAssistant = () => {
               autoFocus
               onChange={e => setInput(e.target.value)}
               placeholder="Ask about live stock prices, latest news, or financial analysis..."
-              className="flex-1 bg-slate-800/90 border border-slate-700 focus:border-orange-400 rounded-full px-5 py-3 text-white placeholder-slate-400 outline-none transition-all focus:ring-2 focus:ring-orange-500/40"
+              className="flex-1 bg-muted/90 border border-border focus:border-primary rounded-full px-5 py-3 text-foreground placeholder-muted-foreground outline-none transition-all focus:ring-2 focus:ring-primary/40"
               disabled={isLoading}
               onKeyPress={handleKeyPress}
             />
@@ -222,7 +222,7 @@ export const AIChatAssistant = () => {
               type="submit"
               size="icon"
               disabled={isLoading || !input.trim()}
-              className="bg-orange-600 hover:bg-orange-700 rounded-full p-0 w-12 h-12 transition duration-200 shadow-lg flex items-center justify-center"
+              className="bg-primary hover:bg-primary/90 rounded-full p-0 w-12 h-12 transition duration-200 shadow-lg flex items-center justify-center"
               aria-label="Send"
             >
               <Send className="w-5 h-5" />
