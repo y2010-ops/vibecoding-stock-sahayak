@@ -26,21 +26,22 @@ async function scrapeFinancialData(query: string, stockSymbol?: string): Promise
   
   try {
     // Determine what type of data to scrape based on query
-    const isStockPriceQuery = /price|quote|trading|current|live/i.test(query);
+    const isStockPriceQuery = /price|quote|trading|current|live|stock|share/i.test(query);
     const isNewsQuery = /news|latest|update|announcement/i.test(query);
-    const isFinancialQuery = /financial|report|balance|income|revenue|profit/i.test(query);
+    const isFinancialQuery = /financial|report|balance|income|revenue|profit|analysis/i.test(query);
 
-    // Stock price scraping
+    // Stock price scraping with better error handling
     if (isStockPriceQuery && stockSymbol) {
       console.log(`Scraping stock price for ${stockSymbol}`);
       const stockUrls = [
-        `https://www.nseindia.com/get-quotes/equity?symbol=${stockSymbol}`,
         `https://www.moneycontrol.com/india/stockpricequote/${stockSymbol.toLowerCase()}`,
-        `https://finance.yahoo.com/quote/${stockSymbol}.NS`
+        `https://finance.yahoo.com/quote/${stockSymbol}.NS`,
+        `https://www.screener.in/company/${stockSymbol}/`
       ];
 
       for (const url of stockUrls) {
         try {
+          console.log(`Attempting to scrape: ${url}`);
           const response = await fetch('https://api.firecrawl.dev/v0/scrape', {
             method: 'POST',
             headers: {
@@ -51,18 +52,21 @@ async function scrapeFinancialData(query: string, stockSymbol?: string): Promise
               url: url,
               formats: ['markdown'],
               onlyMainContent: true,
-              timeout: 10000
+              timeout: 15000,
+              waitFor: 2000
             }),
           });
 
           if (response.ok) {
             const data = await response.json();
+            console.log(`Scrape response for ${url}:`, data.success);
             if (data.success && data.data?.markdown) {
               webData.stockPrices = {
                 source: url,
-                data: data.data.markdown,
+                data: data.data.markdown.substring(0, 3000), // Limit data size
                 timestamp: new Date().toISOString()
               };
+              console.log('Successfully scraped stock data');
               break; // Use first successful scrape
             }
           }
@@ -72,17 +76,18 @@ async function scrapeFinancialData(query: string, stockSymbol?: string): Promise
       }
     }
 
-    // News scraping
+    // News scraping with better sources
     if (isNewsQuery) {
       console.log('Scraping financial news');
       const newsUrls = [
         'https://www.moneycontrol.com/news/',
         'https://economictimes.indiatimes.com/markets',
-        'https://www.livemint.com/market'
+        'https://www.business-standard.com/markets'
       ];
 
       for (const url of newsUrls) {
         try {
+          console.log(`Attempting to scrape news from: ${url}`);
           const response = await fetch('https://api.firecrawl.dev/v0/scrape', {
             method: 'POST',
             headers: {
@@ -93,18 +98,21 @@ async function scrapeFinancialData(query: string, stockSymbol?: string): Promise
               url: url,
               formats: ['markdown'],
               onlyMainContent: true,
-              timeout: 10000
+              timeout: 15000,
+              waitFor: 2000
             }),
           });
 
           if (response.ok) {
             const data = await response.json();
+            console.log(`News scrape response for ${url}:`, data.success);
             if (data.success && data.data?.markdown) {
               webData.news = {
                 source: url,
-                data: data.data.markdown,
+                data: data.data.markdown.substring(0, 4000), // Limit data size
                 timestamp: new Date().toISOString()
               };
+              console.log('Successfully scraped news data');
               break;
             }
           }
@@ -119,11 +127,12 @@ async function scrapeFinancialData(query: string, stockSymbol?: string): Promise
       console.log(`Scraping financial data for ${stockSymbol}`);
       const financialUrls = [
         `https://www.screener.in/company/${stockSymbol}/`,
-        `https://www.moneycontrol.com/financials/${stockSymbol.toLowerCase()}`
+        `https://www.moneycontrol.com/financials/${stockSymbol.toLowerCase()}/results/`
       ];
 
       for (const url of financialUrls) {
         try {
+          console.log(`Attempting to scrape financial data from: ${url}`);
           const response = await fetch('https://api.firecrawl.dev/v0/scrape', {
             method: 'POST',
             headers: {
@@ -134,18 +143,21 @@ async function scrapeFinancialData(query: string, stockSymbol?: string): Promise
               url: url,
               formats: ['markdown'],
               onlyMainContent: true,
-              timeout: 10000
+              timeout: 15000,
+              waitFor: 2000
             }),
           });
 
           if (response.ok) {
             const data = await response.json();
+            console.log(`Financial scrape response for ${url}:`, data.success);
             if (data.success && data.data?.markdown) {
               webData.financialData = {
                 source: url,
-                data: data.data.markdown,
+                data: data.data.markdown.substring(0, 3000), // Limit data size
                 timestamp: new Date().toISOString()
               };
+              console.log('Successfully scraped financial data');
               break;
             }
           }
@@ -163,20 +175,45 @@ async function scrapeFinancialData(query: string, stockSymbol?: string): Promise
 }
 
 function extractStockSymbol(message: string): string | null {
-  // Extract stock symbols from common patterns
+  console.log('Analyzing message for stock symbol:', message);
+  
+  // Enhanced stock symbol extraction patterns
   const patterns = [
-    /\b([A-Z]{2,10})\s+(?:stock|share|price|quote)/i,
-    /(?:stock|share|price|quote)\s+(?:of\s+)?([A-Z]{2,10})\b/i,
-    /\b([A-Z]{2,10})\s+(?:analysis|recommendation)/i,
-    /\b(RELIANCE|TCS|HDFCBANK|INFY|ITC|SBIN|BHARTIARTL|LT|WIPRO|MARUTI)\b/i
+    // Direct company mentions
+    /\b(LIC|LIFECORP)\b/i,
+    /life\s+insurance\s+corp/i,
+    
+    // Common Indian stocks
+    /\b(RELIANCE|TCS|HDFCBANK|INFY|ITC|SBIN|BHARTIARTL|LT|WIPRO|MARUTI|ADANIENT|ASIANPAINT|BAJFINANCE|KOTAKBANK|HINDUNILVR|TATAMOTORS|ULTRACEMCO|NESTLEIND|DRREDDY|POWERGRID|NTPC|ONGC|COALINDIA|GRASIM|BPCL|JSWSTEEL|TATASTEEL|HINDALCO|SHREECEM|BRITANNIA|DIVISLAB|CIPLA|EICHERMOT|HEROMOTOCO|BAJAJ-AUTO|M&M|TECHM|SUNPHARMA|TITAN)\b/i,
+    
+    // Pattern: "stock of [COMPANY]" or "[COMPANY] stock"
+    /(?:stock\s+(?:of\s+)?|share\s+(?:of\s+)?|price\s+(?:of\s+)?)([A-Z]{2,15})(?:\s+(?:stock|share|price|company))?/i,
+    /([A-Z]{2,15})\s+(?:stock|share|price|quote|analysis)/i,
+    
+    // Pattern: specific stock queries
+    /\b([A-Z]{3,10})\s+(?:current|latest|today|live)/i,
+    
+    // Company name patterns
+    /(?:company|corp|corporation|ltd|limited)\s+([A-Z]{2,10})/i,
+    /([A-Z]{2,10})\s+(?:company|corp|corporation|ltd|limited)/i
   ];
 
   for (const pattern of patterns) {
     const match = message.match(pattern);
     if (match) {
-      return match[1].toUpperCase();
+      let symbol = match[1]?.toUpperCase();
+      
+      // Handle special cases
+      if (symbol === 'LIFECORP' || /life.*insurance/i.test(message)) {
+        symbol = 'LICI'; // LIC India stock symbol
+      }
+      
+      console.log(`Extracted stock symbol: ${symbol} using pattern: ${pattern}`);
+      return symbol;
     }
   }
+  
+  console.log('No stock symbol found in message');
   return null;
 }
 
@@ -195,7 +232,7 @@ serve(async (req) => {
 
     // Scrape relevant web data
     const webData = await scrapeFinancialData(message, stockSymbol);
-    console.log('Scraped web data:', Object.keys(webData));
+    console.log('Scraped web data types:', Object.keys(webData));
 
     // Build enhanced system prompt with web data
     let systemPrompt = `You are StockMind AI, a specialized Indian stock market assistant with access to real-time market data. You help investors with:
@@ -217,6 +254,8 @@ Key Guidelines:
 - Be conversational but professional
 - Always add risk disclaimers for investment advice
 - Use the provided real-time data to give accurate, current information
+- If you have real-time data, use it prominently in your response
+- Always mention the source and timestamp of any live data used
 
 Current context: ${context || 'General stock market conversation with live data access'}
 
@@ -224,20 +263,22 @@ REAL-TIME DATA AVAILABLE:`;
 
     // Add scraped data to the prompt
     if (webData.stockPrices) {
-      systemPrompt += `\n\nLIVE STOCK PRICE DATA (${webData.stockPrices.timestamp}):\n${webData.stockPrices.data}`;
+      systemPrompt += `\n\nLIVE STOCK PRICE DATA (${webData.stockPrices.timestamp}):\nSource: ${webData.stockPrices.source}\n${webData.stockPrices.data}`;
     }
 
     if (webData.news) {
-      systemPrompt += `\n\nLATEST MARKET NEWS (${webData.news.timestamp}):\n${webData.news.data}`;
+      systemPrompt += `\n\nLATEST MARKET NEWS (${webData.news.timestamp}):\nSource: ${webData.news.source}\n${webData.news.data}`;
     }
 
     if (webData.financialData) {
-      systemPrompt += `\n\nFINANCIAL DATA (${webData.financialData.timestamp}):\n${webData.financialData.data}`;
+      systemPrompt += `\n\nFINANCIAL DATA (${webData.financialData.timestamp}):\nSource: ${webData.financialData.source}\n${webData.financialData.data}`;
     }
 
     if (Object.keys(webData).length === 0) {
-      systemPrompt += '\n\nNote: No specific real-time data was scraped for this query, providing general market knowledge.';
+      systemPrompt += '\n\nNote: No specific real-time data was scraped for this query. I will provide general market knowledge and suggest checking official financial websites for the most current data.';
     }
+
+    console.log('Sending request to Gemini with data types:', Object.keys(webData));
 
     const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
