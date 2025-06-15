@@ -3,136 +3,224 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const geminiApiKey = 'AIzaSyCgLle23-yYqdR9wmbDOyGAEbd40kzJMSI';
-const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY');
+const alphaVantageApiKey = Deno.env.get('ALPHA_VANTAGE_API_KEY');
+const newsApiKey = Deno.env.get('NEWS_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface WebData {
+interface FinancialData {
   stockPrices?: any;
   news?: any;
-  financialData?: any;
+  technicalData?: any;
   error?: string;
   debug?: any;
 }
 
-async function scrapeFinancialData(query: string, stockSymbol?: string): Promise<WebData> {
-  console.log('=== SCRAPING DEBUG START ===');
-  console.log('Firecrawl API Key available:', !!firecrawlApiKey);
+async function fetchYahooFinanceData(symbol: string): Promise<any> {
+  try {
+    console.log(`📈 Fetching Yahoo Finance data for: ${symbol}`);
+    
+    // Add .NS suffix for NSE stocks if not present
+    const yahooSymbol = symbol.includes('.') ? symbol : `${symbol}.NS`;
+    
+    const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+      },
+      signal: AbortSignal.timeout(8000)
+    });
+
+    if (!response.ok) {
+      console.log(`❌ Yahoo Finance API error: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    console.log(`✅ Yahoo Finance data fetched successfully for ${yahooSymbol}`);
+    
+    if (data.chart?.result?.[0]) {
+      const result = data.chart.result[0];
+      const meta = result.meta;
+      const quote = result.indicators?.quote?.[0];
+      const timestamp = result.timestamp;
+      
+      return {
+        symbol: meta.symbol,
+        regularMarketPrice: meta.regularMarketPrice,
+        previousClose: meta.previousClose,
+        regularMarketChange: meta.regularMarketPrice - meta.previousClose,
+        regularMarketChangePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose) * 100,
+        regularMarketVolume: meta.regularMarketVolume,
+        marketCap: meta.marketCap,
+        currency: meta.currency,
+        exchangeName: meta.exchangeName,
+        longName: meta.longName,
+        timestamp: new Date().toISOString(),
+        rawData: {
+          high: quote?.high?.[quote.high.length - 1],
+          low: quote?.low?.[quote.low.length - 1],
+          open: quote?.open?.[quote.open.length - 1],
+          volume: quote?.volume?.[quote.volume.length - 1]
+        }
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Yahoo Finance API error: ${error.message}`);
+    return null;
+  }
+}
+
+async function fetchAlphaVantageData(symbol: string): Promise<any> {
+  if (!alphaVantageApiKey) {
+    console.log('⚠️ Alpha Vantage API key not available');
+    return null;
+  }
+
+  try {
+    console.log(`📊 Fetching Alpha Vantage data for: ${symbol}`);
+    
+    const response = await fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}.NS&apikey=${alphaVantageApiKey}`, {
+      signal: AbortSignal.timeout(8000)
+    });
+
+    if (!response.ok) {
+      console.log(`❌ Alpha Vantage API error: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    console.log(`✅ Alpha Vantage data fetched successfully for ${symbol}`);
+    
+    if (data['Global Quote']) {
+      const quote = data['Global Quote'];
+      return {
+        symbol: quote['01. symbol'],
+        price: parseFloat(quote['05. price']),
+        change: parseFloat(quote['09. change']),
+        changePercent: quote['10. change percent'],
+        volume: parseInt(quote['06. volume']),
+        latestTradingDay: quote['07. latest trading day'],
+        timestamp: new Date().toISOString()
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ Alpha Vantage API error: ${error.message}`);
+    return null;
+  }
+}
+
+async function fetchFinancialNews(): Promise<any> {
+  if (!newsApiKey) {
+    console.log('⚠️ News API key not available');
+    return null;
+  }
+
+  try {
+    console.log('📰 Fetching latest financial news...');
+    
+    const response = await fetch(`https://newsapi.org/v2/everything?q=indian+stock+market+OR+NSE+OR+BSE+OR+sensex+OR+nifty&language=en&sortBy=publishedAt&pageSize=5&apiKey=${newsApiKey}`, {
+      signal: AbortSignal.timeout(8000)
+    });
+
+    if (!response.ok) {
+      console.log(`❌ News API error: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+    console.log(`✅ Financial news fetched successfully`);
+    
+    if (data.articles && data.articles.length > 0) {
+      return {
+        articles: data.articles.slice(0, 3).map(article => ({
+          title: article.title,
+          description: article.description,
+          source: article.source.name,
+          publishedAt: article.publishedAt,
+          url: article.url
+        })),
+        timestamp: new Date().toISOString()
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`❌ News API error: ${error.message}`);
+    return null;
+  }
+}
+
+async function fetchFinancialAPIs(query: string, stockSymbol?: string): Promise<FinancialData> {
+  console.log('=== FINANCIAL API INTEGRATION START ===');
   console.log('Query:', query);
   console.log('Stock Symbol:', stockSymbol);
 
-  if (!firecrawlApiKey) {
-    console.log('❌ Firecrawl API key not available');
-    return { error: 'Firecrawl API key not configured' };
-  }
-
-  const webData: WebData = { debug: {} };
+  const financialData: FinancialData = { debug: {} };
   
   try {
-    // Quick test with shorter timeout
-    console.log('🔍 Testing Firecrawl API connection with shorter timeout...');
-    
-    const testResponse = await Promise.race([
-      fetch('https://api.firecrawl.dev/v0/scrape', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${firecrawlApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: 'https://httpbin.org/json',
-          formats: ['markdown'],
-          timeout: 5000 // Reduced timeout
-        }),
-      }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Test timeout')), 8000)
-      )
-    ]) as Response;
-
-    console.log('Test API response status:', testResponse.status);
-    webData.debug.testApiStatus = testResponse.status;
-
-    if (!testResponse.ok) {
-      const errorText = await testResponse.text();
-      console.log('❌ Firecrawl API test failed:', errorText);
-      webData.debug.testApiError = errorText;
-      return { error: `API temporarily unavailable`, debug: webData.debug };
-    }
-
-    console.log('✅ Firecrawl API test successful');
-
-    // Only attempt scraping if test passes and we have a stock symbol
+    // Fetch stock data if symbol is provided
     if (stockSymbol) {
-      console.log(`📈 Attempting quick stock data fetch for: ${stockSymbol}`);
+      console.log(`📈 Fetching stock data for: ${stockSymbol}`);
       
-      // Try just one reliable source with very short timeout
-      const stockUrl = `https://finance.yahoo.com/quote/${stockSymbol}.NS`;
+      // Try Yahoo Finance first (most reliable for Indian stocks)
+      const yahooData = await fetchYahooFinanceData(stockSymbol);
+      if (yahooData) {
+        financialData.stockPrices = {
+          source: 'Yahoo Finance',
+          data: yahooData,
+          timestamp: new Date().toISOString(),
+          symbol: stockSymbol
+        };
+        console.log('✅ Yahoo Finance data successful');
+      }
       
-      try {
-        const stockResponse = await Promise.race([
-          fetch('https://api.firecrawl.dev/v0/scrape', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${firecrawlApiKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              url: stockUrl,
-              formats: ['markdown'],
-              onlyMainContent: true,
-              timeout: 8000, // Very short timeout
-              waitFor: 1000,
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-              }
-            }),
-          }),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Stock scrape timeout')), 10000)
-          )
-        ]) as Response;
-
-        console.log(`Stock scrape response status: ${stockResponse.status}`);
-        
-        if (stockResponse.ok) {
-          const data = await stockResponse.json();
-          console.log(`Stock scrape success: ${data.success}`);
-          
-          if (data.success && data.data?.markdown) {
-            const content = data.data.markdown;
-            console.log(`Content length: ${content.length}`);
-            
-            if (content.length > 100) {
-              webData.stockPrices = {
-                source: stockUrl,
-                data: content.substring(0, 3000), // Limit content size
-                timestamp: new Date().toISOString(),
-                symbol: stockSymbol
-              };
-              console.log('✅ Successfully scraped stock data');
-            }
-          }
+      // Try Alpha Vantage as backup/additional data
+      if (alphaVantageApiKey) {
+        const alphaData = await fetchAlphaVantageData(stockSymbol);
+        if (alphaData) {
+          financialData.technicalData = {
+            source: 'Alpha Vantage',
+            data: alphaData,
+            timestamp: new Date().toISOString()
+          };
+          console.log('✅ Alpha Vantage data successful');
         }
-      } catch (stockError) {
-        console.log(`⚠️ Stock scraping failed: ${stockError.message}`);
-        webData.debug.stockScrapingError = stockError.message;
       }
     }
 
-    console.log('=== SCRAPING SUMMARY ===');
-    console.log('Stock prices scraped:', !!webData.stockPrices);
+    // Fetch financial news
+    if (newsApiKey) {
+      const newsData = await fetchFinancialNews();
+      if (newsData) {
+        financialData.news = {
+          source: 'NewsAPI',
+          data: newsData,
+          timestamp: new Date().toISOString()
+        };
+        console.log('✅ Financial news successful');
+      }
+    }
+
+    console.log('=== API INTEGRATION SUMMARY ===');
+    console.log('Stock prices fetched:', !!financialData.stockPrices);
+    console.log('Technical data fetched:', !!financialData.technicalData);
+    console.log('News fetched:', !!financialData.news);
 
   } catch (error) {
-    console.error('❌ Critical error in scrapeFinancialData:', error);
-    webData.error = `Data service temporarily unavailable`;
-    webData.debug.criticalError = error.message;
+    console.error('❌ Critical error in fetchFinancialAPIs:', error);
+    financialData.error = `Financial data service temporarily unavailable`;
+    financialData.debug.criticalError = error.message;
   }
 
-  return webData;
+  return financialData;
 }
 
 function extractStockSymbol(message: string): string | null {
@@ -144,7 +232,7 @@ function extractStockSymbol(message: string): string | null {
     /\b(LIC|LICI)\b/i,
     /life\s+insurance\s+corp/i,
     
-    // Common Indian stocks
+    // Common Indian stocks with better matching
     /\b(RELIANCE|TCS|HDFCBANK|INFY|ITC|SBIN|BHARTIARTL|LT|WIPRO|MARUTI|ADANIENT|ASIANPAINT|BAJFINANCE|KOTAKBANK|HINDUNILVR|TATAMOTORS|ULTRACEMCO|NESTLEIND|DRREDDY|POWERGRID|NTPC|ONGC|COALINDIA|GRASIM|BPCL|JSWSTEEL|TATASTEEL|HINDALCO|SHREECEM|BRITANNIA|DIVISLAB|CIPLA|EICHERMOT|HEROMOTOCO|BAJAJ-AUTO|M&M|TECHM|SUNPHARMA|TITAN)\b/i,
     
     // Pattern: stock/price/quote mentions
@@ -184,24 +272,24 @@ serve(async (req) => {
     const stockSymbol = extractStockSymbol(message);
     console.log('📊 Extracted stock symbol:', stockSymbol);
 
-    // Attempt to scrape web data with improved timeout handling
-    console.log('🌐 Starting web data scraping...');
-    const webData = await scrapeFinancialData(message, stockSymbol);
-    console.log('📊 Scraped web data summary:', {
-      hasStockPrices: !!webData.stockPrices,
-      hasNews: !!webData.news,
-      hasFinancialData: !!webData.financialData,
-      hasError: !!webData.error,
-      debug: webData.debug
+    // Fetch financial data using direct APIs
+    console.log('💰 Starting financial API data fetch...');
+    const financialData = await fetchFinancialAPIs(message, stockSymbol);
+    console.log('📊 Financial API data summary:', {
+      hasStockPrices: !!financialData.stockPrices,
+      hasTechnicalData: !!financialData.technicalData,
+      hasNews: !!financialData.news,
+      hasError: !!financialData.error,
+      debug: financialData.debug
     });
 
-    // Build enhanced system prompt with improved fallback
-    let systemPrompt = `You are StockMind AI, a specialized Indian stock market assistant. You help investors with:
+    // Build enhanced system prompt with real-time data
+    let systemPrompt = `You are StockMind AI, a specialized Indian stock market assistant with access to real-time financial APIs. You help investors with:
 
-1. Stock analysis and recommendations for NSE/BSE stocks
-2. Market insights and trends 
+1. Live stock analysis and recommendations for NSE/BSE stocks
+2. Real-time market insights and trends 
 3. Investment strategies for Indian markets
-4. Technical and fundamental analysis
+4. Technical and fundamental analysis with current data
 5. Risk assessment and portfolio advice
 
 Key Guidelines:
@@ -213,39 +301,76 @@ Key Guidelines:
 - Include regulatory context (SEBI guidelines when relevant)
 - Be conversational but professional
 - Always add risk disclaimers for investment advice
-- If you cannot access real-time data, provide general market knowledge and suggest reliable sources
 
 Current context: ${context || 'General stock market conversation'}
 
 REAL-TIME DATA STATUS:`;
 
-    // Add scraped data to the prompt with better error handling
+    // Add fetched data to the prompt
     let dataUsed = [];
     
-    if (webData.stockPrices) {
-      systemPrompt += `\n\n🔥 LIVE STOCK PRICE DATA AVAILABLE (${webData.stockPrices.timestamp}):\nSource: ${webData.stockPrices.source}\nSymbol: ${webData.stockPrices.symbol}\nData: ${webData.stockPrices.data}`;
-      dataUsed.push('stockPrices');
+    if (financialData.stockPrices) {
+      const stockData = financialData.stockPrices.data;
+      systemPrompt += `\n\n🔥 LIVE STOCK PRICE DATA (${financialData.stockPrices.timestamp}):
+Source: ${financialData.stockPrices.source}
+Symbol: ${stockData.symbol}
+Current Price: ₹${stockData.regularMarketPrice}
+Previous Close: ₹${stockData.previousClose}
+Change: ₹${stockData.regularMarketChange?.toFixed(2)} (${stockData.regularMarketChangePercent?.toFixed(2)}%)
+Volume: ${stockData.regularMarketVolume?.toLocaleString('en-IN')}
+Market Cap: ₹${(stockData.marketCap / 10000000)?.toFixed(0)} crores
+Company: ${stockData.longName}
+Exchange: ${stockData.exchangeName}
+Day High: ₹${stockData.rawData?.high}
+Day Low: ₹${stockData.rawData?.low}
+Day Open: ₹${stockData.rawData?.open}`;
+      dataUsed.push('Live Stock Prices');
     }
 
-    if (webData.error) {
-      systemPrompt += `\n\n⚠️ DATA SCRAPING STATUS: ${webData.error}. When this happens, provide helpful general information about the requested stock/topic and recommend checking official sources like NSE, BSE, or major financial websites for real-time data.`;
+    if (financialData.technicalData) {
+      const techData = financialData.technicalData.data;
+      systemPrompt += `\n\n📊 TECHNICAL DATA (${financialData.technicalData.timestamp}):
+Source: ${financialData.technicalData.source}
+Price: ₹${techData.price}
+Change: ₹${techData.change} (${techData.changePercent})
+Volume: ${techData.volume?.toLocaleString('en-IN')}
+Latest Trading Day: ${techData.latestTradingDay}`;
+      dataUsed.push('Technical Analysis');
+    }
+
+    if (financialData.news) {
+      const newsData = financialData.news.data;
+      systemPrompt += `\n\n📰 LATEST FINANCIAL NEWS (${financialData.news.timestamp}):
+Source: ${financialData.news.source}`;
+      newsData.articles.forEach((article: any, index: number) => {
+        systemPrompt += `\n${index + 1}. ${article.title}
+   Summary: ${article.description}
+   Source: ${article.source}
+   Published: ${new Date(article.publishedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST`;
+      });
+      dataUsed.push('Latest News');
+    }
+
+    if (financialData.error) {
+      systemPrompt += `\n\n⚠️ DATA API STATUS: ${financialData.error}. Provide helpful general information and recommend checking official sources.`;
     }
 
     if (dataUsed.length === 0) {
-      systemPrompt += '\n\n⚠️ NOTE: Real-time data scraping is currently experiencing technical difficulties. Please provide general market knowledge and analysis while recommending users check official financial websites (NSE, BSE, MoneyControl, Economic Times) for current data. Focus on providing valuable insights about the requested stock or market topic using your knowledge.';
+      systemPrompt += '\n\n⚠️ NOTE: Real-time API data is currently experiencing technical difficulties. Please provide general market knowledge while recommending users check official financial websites (NSE, BSE, MoneyControl, Economic Times) for current data.';
     } else {
-      systemPrompt += '\n\n✅ SUCCESS: Live data has been scraped and is available for analysis. Use this data prominently in your response.';
+      systemPrompt += '\n\n✅ SUCCESS: Live financial data has been fetched and is available for analysis. Use this data prominently in your response and provide specific insights based on the current numbers.';
     }
 
-    // Enhanced prompt for better responses when data is unavailable
-    if (stockSymbol && !webData.stockPrices) {
-      systemPrompt += `\n\nSpecific guidance for ${stockSymbol}: Since real-time data is unavailable, provide comprehensive analysis including:
-- Company overview and business model
-- Recent performance trends and market position
-- Key financial metrics to watch
-- Investment considerations and risk factors
-- Suggest specific reliable sources for current price (NSE: nseindia.com, BSE: bseindia.com, MoneyControl, Yahoo Finance India)
-- Market sentiment and analyst views if known`;
+    // Enhanced prompt for better responses when data is available
+    if (stockSymbol && financialData.stockPrices) {
+      const stockData = financialData.stockPrices.data;
+      const changeDirection = stockData.regularMarketChange >= 0 ? 'gained' : 'lost';
+      const changeColor = stockData.regularMarketChange >= 0 ? '🟢' : '🔴';
+      
+      systemPrompt += `\n\nCURRENT ANALYSIS FOR ${stockSymbol}: 
+${changeColor} The stock has ${changeDirection} ₹${Math.abs(stockData.regularMarketChange)?.toFixed(2)} (${Math.abs(stockData.regularMarketChangePercent)?.toFixed(2)}%) today.
+Current trading at ₹${stockData.regularMarketPrice} with volume of ${stockData.regularMarketVolume?.toLocaleString('en-IN')} shares.
+Provide specific insights about this performance, technical levels, and investment considerations based on current data.`;
     }
 
     console.log('🤖 Sending request to Gemini with data types:', dataUsed);
@@ -259,7 +384,7 @@ REAL-TIME DATA STATUS:`;
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `${systemPrompt}\n\nUser Query: ${message}\n\nPlease provide a comprehensive and helpful response. If real-time data is unavailable, focus on providing valuable analysis and insights while guiding users to reliable sources for current information.`
+            text: `${systemPrompt}\n\nUser Query: ${message}\n\nPlease provide a comprehensive response using the real-time data available. Focus on actionable insights and current market context.`
           }]
         }],
         generationConfig: {
@@ -278,15 +403,19 @@ REAL-TIME DATA STATUS:`;
     const geminiData = await geminiResponse.json();
     const response = geminiData.candidates[0].content.parts[0].text;
 
-    console.log('✅ Successfully generated AI response');
+    console.log('✅ Successfully generated AI response with real-time data');
 
     return new Response(JSON.stringify({ 
       response,
       webDataUsed: dataUsed,
       stockSymbol: stockSymbol,
       timestamp: new Date().toISOString(),
-      debug: webData.debug,
-      scrapingError: webData.error
+      debug: financialData.debug,
+      apiSources: {
+        yahooFinance: !!financialData.stockPrices,
+        alphaVantage: !!financialData.technicalData,
+        newsApi: !!financialData.news
+      }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
