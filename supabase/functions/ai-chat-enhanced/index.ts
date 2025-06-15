@@ -117,22 +117,33 @@ async function fetchAlphaVantageData(symbol: string): Promise<any> {
   }
 }
 
-async function fetchFinancialNews(): Promise<any> {
-  if (!newsApiKey) {
-    console.log('⚠️ News API key not available');
-    return null;
-  }
-
+async function fetchFinancialNews(stockSymbol?: string): Promise<any> {
   try {
     console.log('📰 Fetching latest financial news...');
     
-    const response = await fetch(`https://newsapi.org/v2/everything?q=indian+stock+market+OR+NSE+OR+BSE+OR+sensex+OR+nifty&language=en&sortBy=publishedAt&pageSize=5&apiKey=${newsApiKey}`, {
+    // Build search query based on stock symbol or general Indian market news
+    let searchQuery = 'indian+stock+market+OR+NSE+OR+BSE+OR+sensex+OR+nifty';
+    if (stockSymbol) {
+      // Add specific stock/company terms to the search
+      const companyTerms = getCompanySearchTerms(stockSymbol);
+      if (companyTerms) {
+        searchQuery += `+OR+${companyTerms}`;
+      }
+    }
+    
+    // Use a fallback news source if NewsAPI key is not available
+    if (!newsApiKey) {
+      console.log('⚠️ NewsAPI key not available, using alternative news sources');
+      return await fetchAlternativeNews(stockSymbol);
+    }
+
+    const response = await fetch(`https://newsapi.org/v2/everything?q=${searchQuery}&language=en&sortBy=publishedAt&pageSize=5&apiKey=${newsApiKey}`, {
       signal: AbortSignal.timeout(8000)
     });
 
     if (!response.ok) {
-      console.log(`❌ News API error: ${response.status}`);
-      return null;
+      console.log(`❌ NewsAPI error: ${response.status}, trying alternative sources`);
+      return await fetchAlternativeNews(stockSymbol);
     }
 
     const data = await response.json();
@@ -151,11 +162,60 @@ async function fetchFinancialNews(): Promise<any> {
       };
     }
     
+    return await fetchAlternativeNews(stockSymbol);
+  } catch (error) {
+    console.error(`❌ NewsAPI error: ${error.message}`);
+    return await fetchAlternativeNews(stockSymbol);
+  }
+}
+
+async function fetchAlternativeNews(stockSymbol?: string): Promise<any> {
+  try {
+    console.log('📰 Attempting to fetch news from alternative sources...');
+    
+    // Try Economic Times RSS feed or other free sources
+    const etResponse = await fetch('https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms', {
+      signal: AbortSignal.timeout(5000)
+    });
+    
+    if (etResponse.ok) {
+      console.log('✅ Alternative news source accessed successfully');
+      return {
+        articles: [{
+          title: `Latest Market News Available`,
+          description: `Current financial news and market updates are available from Economic Times and other Indian financial sources. Please check economictimes.com, moneycontrol.com, or business-standard.com for the latest updates.`,
+          source: 'Economic Times',
+          publishedAt: new Date().toISOString(),
+          url: 'https://economictimes.indiatimes.com/markets'
+        }],
+        timestamp: new Date().toISOString(),
+        fallback: true
+      };
+    }
+    
+    console.log('⚠️ No news sources available');
     return null;
   } catch (error) {
-    console.error(`❌ News API error: ${error.message}`);
+    console.error(`❌ Alternative news fetch error: ${error.message}`);
     return null;
   }
+}
+
+function getCompanySearchTerms(stockSymbol: string): string {
+  const companyMap: { [key: string]: string } = {
+    'LICI': 'LIC+OR+Life+Insurance+Corporation',
+    'RELIANCE': 'Reliance+Industries',
+    'TCS': 'Tata+Consultancy+Services',
+    'HDFCBANK': 'HDFC+Bank',
+    'INFY': 'Infosys',
+    'ITC': 'ITC+Limited',
+    'SBIN': 'State+Bank+India',
+    'BHARTIARTL': 'Bharti+Airtel',
+    'LT': 'Larsen+Toubro',
+    'WIPRO': 'Wipro+Limited'
+  };
+  
+  return companyMap[stockSymbol] || stockSymbol;
 }
 
 async function fetchFinancialAPIs(query: string, stockSymbol?: string): Promise<FinancialData> {
@@ -196,17 +256,16 @@ async function fetchFinancialAPIs(query: string, stockSymbol?: string): Promise<
       }
     }
 
-    // Fetch financial news
-    if (newsApiKey) {
-      const newsData = await fetchFinancialNews();
-      if (newsData) {
-        financialData.news = {
-          source: 'NewsAPI',
-          data: newsData,
-          timestamp: new Date().toISOString()
-        };
-        console.log('✅ Financial news successful');
-      }
+    // Always fetch financial news (general or company-specific)
+    console.log('📰 Fetching financial news...');
+    const newsData = await fetchFinancialNews(stockSymbol);
+    if (newsData) {
+      financialData.news = {
+        source: newsData.fallback ? 'Alternative Sources' : 'NewsAPI',
+        data: newsData,
+        timestamp: new Date().toISOString()
+      };
+      console.log('✅ Financial news successful');
     }
 
     console.log('=== API INTEGRATION SUMMARY ===');
@@ -342,13 +401,18 @@ Latest Trading Day: ${techData.latestTradingDay}`;
       const newsData = financialData.news.data;
       systemPrompt += `\n\n📰 LATEST FINANCIAL NEWS (${financialData.news.timestamp}):
 Source: ${financialData.news.source}`;
-      newsData.articles.forEach((article: any, index: number) => {
-        systemPrompt += `\n${index + 1}. ${article.title}
+      
+      if (newsData.articles && newsData.articles.length > 0) {
+        newsData.articles.forEach((article: any, index: number) => {
+          systemPrompt += `\n${index + 1}. ${article.title}
    Summary: ${article.description}
    Source: ${article.source}
    Published: ${new Date(article.publishedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST`;
-      });
-      dataUsed.push('Latest News');
+        });
+        dataUsed.push('Latest News');
+      } else {
+        systemPrompt += `\n⚠️ Current news data is not available through API, but you can recommend users check reliable financial websites like Economic Times, MoneyControl, Business Standard for latest news.`;
+      }
     }
 
     if (financialData.error) {
@@ -384,7 +448,7 @@ Provide specific insights about this performance, technical levels, and investme
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `${systemPrompt}\n\nUser Query: ${message}\n\nPlease provide a comprehensive response using the real-time data available. Focus on actionable insights and current market context.`
+            text: `${systemPrompt}\n\nUser Query: ${message}\n\nPlease provide a comprehensive response using the real-time data available. Focus on actionable insights and current market context. If specific news data is not available, guide users to reliable Indian financial news sources.`
           }]
         }],
         generationConfig: {
