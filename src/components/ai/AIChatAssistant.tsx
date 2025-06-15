@@ -1,11 +1,10 @@
-
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Brain, Send, User, Bot, Loader2 } from "lucide-react";
+import { Brain, Send, User, Bot, Loader2, TrendingUp, MessageCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ChatMessage {
@@ -104,97 +103,92 @@ export const AIChatAssistant = () => {
   };
 
   return (
-    <Card className="bg-slate-800/50 border-slate-700 h-[600px] flex flex-col">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-white flex items-center space-x-2">
-          <Brain className="w-6 h-6 text-orange-500" />
-          <span>StockMind AI Assistant</span>
-        </CardTitle>
-      </CardHeader>
-      
-      <CardContent className="flex-1 flex flex-col p-0">
-        <ScrollArea ref={scrollAreaRef} className="flex-1 px-6">
-          <div className="space-y-4 pb-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex items-start space-x-3 ${
-                  message.type === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                }`}
-              >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                  message.type === 'user' 
-                    ? 'bg-orange-600' 
-                    : 'bg-blue-600'
-                }`}>
-                  {message.type === 'user' ? (
-                    <User className="w-4 h-4 text-white" />
-                  ) : (
-                    <Bot className="w-4 h-4 text-white" />
-                  )}
-                </div>
-                
-                <div className={`flex-1 max-w-[80%] ${
-                  message.type === 'user' ? 'text-right' : ''
-                }`}>
-                  <div className={`inline-block p-3 rounded-lg ${
-                    message.type === 'user'
-                      ? 'bg-orange-600 text-white'
-                      : 'bg-slate-700 text-slate-100'
-                  }`}>
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {message.content}
+    <div className="relative animate-fade-in">
+      {/* Modern Glassmorphism Card */}
+      <div className="bg-slate-900/70 rounded-3xl shadow-xl border border-slate-700 overflow-hidden flex flex-col min-h-[520px] max-h-[75vh]">
+        {/* Header */}
+        <div className="flex items-center gap-2 px-6 py-5 border-b border-slate-700 bg-gradient-to-r from-slate-900/80 via-slate-800/90 to-orange-900/20">
+          <TrendingUp className="w-7 h-7 text-orange-500 drop-shadow" />
+          <span className="text-xl font-extrabold bg-gradient-to-r from-orange-400 via-yellow-300 to-orange-700 bg-clip-text text-transparent tracking-wide">
+            StockMind AI Assistant
+          </span>
+        </div>
+        {/* Chat Area */}
+        <div className="flex-1 flex flex-col p-0">
+          <div
+            ref={scrollAreaRef}
+            className="flex-1 px-4 sm:px-6 py-5 overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500/60"
+            style={{ background: "transparent" }}
+          >
+            <div className="space-y-4 pb-6">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex items-end ${message.type === 'user' ? 'justify-end' : 'justify-start'} group`}
+                >
+                  {/* AVATAR */}
+                  <div className={`flex flex-col items-center gap-1 ${message.type === 'user' ? 'order-2 ml-2' : 'order-1 mr-2'}`}>
+                    <div className={`rounded-full flex items-center justify-center border-2 ${message.type === 'user' ? 'bg-gradient-to-br from-orange-500 to-orange-700 border-orange-500' : 'bg-gradient-to-br from-blue-600 to-slate-700 border-blue-400'} w-9 h-9`}>
+                      {message.type === 'user' ? (
+                        <MessageCircle className="w-5 h-5 text-white" />
+                      ) : (
+                        <TrendingUp className="w-5 h-5 text-orange-300" />
+                      )}
                     </div>
                   </div>
-                  <div className={`text-xs text-slate-500 mt-1 ${
-                    message.type === 'user' ? 'text-right' : ''
-                  }`}>
-                    {message.timestamp.toLocaleTimeString('en-IN', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      timeZone: 'Asia/Kolkata'
-                    })} IST
+                  {/* Message */}
+                  <div className={`max-w-[75%] md:max-w-[60%] break-words`}>
+                    <div className={`p-3 rounded-2xl shadow text-sm md:text-base font-medium 
+                      ${message.type === 'user'
+                        ? 'bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 text-white rounded-br-md'
+                        : 'bg-slate-800/95 text-orange-100 rounded-bl-md'
+                      }`}>
+                      <span className="whitespace-pre-wrap">{message.content}</span>
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">{message.timestamp.toLocaleTimeString('en-IN', { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" })} IST</div>
                   </div>
                 </div>
-              </div>
-            ))}
-            
-            {isLoading && (
-              <div className="flex items-start space-x-3">
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
-                  <Bot className="w-4 h-4 text-white" />
-                </div>
-                <div className="bg-slate-700 p-3 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
-                    <span className="text-sm text-slate-300">AI is thinking...</span>
+              ))}
+              {/* Loading State */}
+              {isLoading && (
+                <div className="flex items-end justify-start group gap-3">
+                  <div className="rounded-full bg-gradient-to-br from-blue-600 to-slate-700 border-2 border-blue-400 w-9 h-9 flex items-center justify-center">
+                    <TrendingUp className="w-5 h-5 text-orange-300 animate-pulse" />
+                  </div>
+                  <div className="bg-slate-800/90 p-3 rounded-2xl rounded-bl-md animate-pulse shadow text-orange-100">
+                    AI is thinking...
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </ScrollArea>
-        
-        <div className="border-t border-slate-700 p-4">
-          <div className="flex space-x-2">
-            <Input
+          {/* Chat Input */}
+          <form
+            className="w-full border-t border-slate-700 bg-gradient-to-r from-slate-900/80 to-orange-950/30 px-4 py-5 flex items-center gap-3"
+            onSubmit={e => { e.preventDefault(); sendMessage(); }}
+          >
+            <input
+              type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Ask about stocks, markets, or investment strategies..."
-              className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
+              autoFocus
+              onChange={e => setInput(e.target.value)}
+              placeholder="Type your question about Indian stocks, news or strategies…"
+              className="flex-1 bg-slate-800/90 border border-slate-700 focus:border-orange-400 rounded-full px-5 py-3 text-white placeholder-slate-400 outline-none transition-all focus:ring-2 focus:ring-orange-500/40"
               disabled={isLoading}
+              onKeyPress={handleKeyPress}
             />
             <Button
-              onClick={sendMessage}
+              type="submit"
+              size="icon"
               disabled={isLoading || !input.trim()}
-              className="bg-orange-600 hover:bg-orange-700"
+              className="bg-orange-600 hover:bg-orange-700 rounded-full p-0 w-12 h-12 transition duration-200 shadow-lg flex items-center justify-center"
+              aria-label="Send"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-5 h-5" />
             </Button>
-          </div>
+          </form>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
