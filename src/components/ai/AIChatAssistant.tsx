@@ -1,10 +1,9 @@
+
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Brain, Send, User, Bot, Loader2, TrendingUp, MessageCircle } from "lucide-react";
+import { TrendingUp, MessageCircle, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ChatMessage {
@@ -19,27 +18,22 @@ export const AIChatAssistant = () => {
     {
       id: '1',
       type: 'assistant',
-      content: 'Hello! I\'m StockMind AI, your Indian stock market assistant. I can help you with stock analysis, market insights, investment strategies, and answer questions about NSE/BSE stocks. What would you like to know?',
+      content: "Hello! I'm StockMind AI, your Indian stock market assistant. I can help you with stock analysis, market insights, investment strategies, and answer questions about NSE/BSE stocks. What would you like to know?",
       timestamp: new Date()
     }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  // Ref for last message div
+  const bottomRef = useRef<HTMLDivElement | null>(null);
   const { toast } = useToast();
 
-  const scrollToBottom = () => {
-    if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
-    }
-  };
-
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    // Scroll to last message in chat when messages update
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [messages, isLoading]);
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -73,7 +67,6 @@ export const AIChatAssistant = () => {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-
     } catch (error: any) {
       console.error('Chat error:', error);
       toast({
@@ -85,7 +78,7 @@ export const AIChatAssistant = () => {
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: "Sorry, I encountered an error. Please try again.",
         timestamp: new Date()
       };
 
@@ -104,7 +97,6 @@ export const AIChatAssistant = () => {
 
   return (
     <div className="relative animate-fade-in">
-      {/* Modern Glassmorphism Card */}
       <div className="bg-slate-900/70 rounded-3xl shadow-xl border border-slate-700 overflow-hidden flex flex-col min-h-[520px] max-h-[75vh]">
         {/* Header */}
         <div className="flex items-center gap-2 px-6 py-5 border-b border-slate-700 bg-gradient-to-r from-slate-900/80 via-slate-800/90 to-orange-900/20">
@@ -115,13 +107,11 @@ export const AIChatAssistant = () => {
         </div>
         {/* Chat Area */}
         <div className="flex-1 flex flex-col p-0">
-          <div
-            ref={scrollAreaRef}
-            className="flex-1 px-4 sm:px-6 py-5 overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500/60"
-            style={{ background: "transparent" }}
+          <ScrollArea className="flex-1 w-full h-full px-4 sm:px-6 py-5 overflow-y-auto scrollbar-thin scrollbar-thumb-orange-500/60"
+            style={{ background: "transparent", maxHeight: "55vh" }}
           >
             <div className="space-y-4 pb-6">
-              {messages.map((message) => (
+              {messages.map((message, idx) => (
                 <div
                   key={message.id}
                   className={`flex items-end ${message.type === 'user' ? 'justify-end' : 'justify-start'} group`}
@@ -137,16 +127,21 @@ export const AIChatAssistant = () => {
                     </div>
                   </div>
                   {/* Message */}
-                  <div className={`max-w-[75%] md:max-w-[60%] break-words`}>
+                  <div className={`max-w-[75vw] md:max-w-[60vw] break-words`}>
                     <div className={`p-3 rounded-2xl shadow text-sm md:text-base font-medium 
                       ${message.type === 'user'
                         ? 'bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 text-white rounded-br-md'
                         : 'bg-slate-800/95 text-orange-100 rounded-bl-md'
                       }`}>
-                      <span className="whitespace-pre-wrap">{message.content}</span>
+                      <span className="whitespace-pre-wrap"
+                      >{message.content}</span>
                     </div>
                     <div className="text-xs text-slate-500 mt-1">{message.timestamp.toLocaleTimeString('en-IN', { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" })} IST</div>
                   </div>
+                  {/* If last item, set ref for scroll-to-bottom */}
+                  {idx === messages.length - 1 && (
+                    <div ref={bottomRef} />
+                  )}
                 </div>
               ))}
               {/* Loading State */}
@@ -161,7 +156,7 @@ export const AIChatAssistant = () => {
                 </div>
               )}
             </div>
-          </div>
+          </ScrollArea>
           {/* Chat Input */}
           <form
             className="w-full border-t border-slate-700 bg-gradient-to-r from-slate-900/80 to-orange-950/30 px-4 py-5 flex items-center gap-3"
