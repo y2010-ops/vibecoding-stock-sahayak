@@ -72,6 +72,11 @@ const Index = () => {
             <div className="flex items-center space-x-4">
               <MarketStatusWidget />
               
+              {/* Theme Toggle - Made more prominent */}
+              <div className="flex items-center">
+                <ThemeToggle />
+              </div>
+              
               <Button
                 onClick={() => navigate('/dashboard')}
                 variant="outline"
@@ -91,8 +96,6 @@ const Index = () => {
                 <MessageCircle className="w-4 h-4 mr-2" />
                 AI Chat
               </Button>
-              
-              <ThemeToggle />
               
               {user ? (
                 <div className="flex items-center space-x-3">
