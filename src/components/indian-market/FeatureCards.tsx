@@ -45,19 +45,19 @@ export const FeatureCards = () => {
   return (
     <section className="space-y-6">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-white mb-2">Comprehensive Market Analysis</h2>
-        <p className="text-slate-400">Everything you need to make informed investment decisions</p>
+        <h2 className="text-3xl font-bold text-foreground mb-2">Comprehensive Market Analysis</h2>
+        <p className="text-muted-foreground">Everything you need to make informed investment decisions</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {features.map((feature, index) => (
-          <Card key={index} className="bg-slate-800/50 border-slate-700 hover:border-slate-600 transition-colors">
+          <Card key={index} className="bg-card/50 border-border hover:border-primary/50 transition-colors backdrop-blur-sm">
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center space-x-3">
                 <feature.icon className={`w-8 h-8 ${feature.color}`} />
-                <h3 className="text-xl font-semibold text-white">{feature.title}</h3>
+                <h3 className="text-xl font-semibold text-foreground">{feature.title}</h3>
               </div>
-              <p className="text-slate-400 leading-relaxed">{feature.description}</p>
+              <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
             </CardContent>
           </Card>
         ))}

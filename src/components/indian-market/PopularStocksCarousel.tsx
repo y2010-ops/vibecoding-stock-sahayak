@@ -72,28 +72,28 @@ export const PopularStocksCarousel = () => {
   return (
     <section className="space-y-6">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-white mb-2">Popular Indian Stocks</h2>
-        <p className="text-slate-400">Live prices from NSE & BSE</p>
+        <h2 className="text-3xl font-bold text-foreground mb-2">Popular Indian Stocks</h2>
+        <p className="text-muted-foreground">Live prices from NSE & BSE</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {stocks.map((stock) => (
-          <Card key={stock.symbol} className="bg-slate-800/50 border-slate-700 hover:border-orange-500 transition-colors cursor-pointer">
+          <Card key={stock.symbol} className="bg-card/50 border-border hover:border-orange-500 transition-colors cursor-pointer backdrop-blur-sm">
             <CardContent className="p-4 space-y-3">
               <div>
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="font-bold text-white text-lg">{stock.symbol}</h3>
-                    <p className="text-sm text-slate-400 truncate">{stock.name}</p>
+                    <h3 className="font-bold text-foreground text-lg">{stock.symbol}</h3>
+                    <p className="text-sm text-muted-foreground truncate">{stock.name}</p>
                   </div>
-                  <span className="text-xs bg-slate-700 text-slate-300 px-2 py-1 rounded">
+                  <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
                     {stock.sector}
                   </span>
                 </div>
               </div>
 
               <div>
-                <div className="text-2xl font-bold text-white">
+                <div className="text-2xl font-bold text-foreground">
                   {formatIndianPrice(stock.price)}
                 </div>
                 <div className={`flex items-center space-x-1 text-sm ${
@@ -107,7 +107,7 @@ export const PopularStocksCarousel = () => {
                 </div>
               </div>
 
-              <div className="space-y-1 text-xs text-slate-400">
+              <div className="space-y-1 text-xs text-muted-foreground">
                 <div className="flex justify-between">
                   <span>Market Cap:</span>
                   <span>{stock.marketCap}</span>

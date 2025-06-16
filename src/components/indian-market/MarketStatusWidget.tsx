@@ -69,10 +69,10 @@ export const MarketStatusWidget = () => {
   };
 
   return (
-    <div className="flex items-center space-x-4 bg-slate-800/50 px-4 py-2 rounded-lg border border-slate-700">
+    <div className="flex items-center space-x-4 bg-card/50 px-4 py-2 rounded-lg border border-border backdrop-blur-sm">
       <div className="flex items-center space-x-2">
-        <Clock className="w-4 h-4 text-slate-400" />
-        <span className="text-sm text-slate-300">{marketStatus.istTime} IST</span>
+        <Clock className="w-4 h-4 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">{marketStatus.istTime} IST</span>
       </div>
       
       <div className={`text-sm font-semibold ${getStatusColor(marketStatus.status)}`}>
@@ -81,8 +81,8 @@ export const MarketStatusWidget = () => {
       
       <div className="flex items-center space-x-3 text-sm">
         <div className="flex items-center space-x-1">
-          <span className="text-slate-400">NIFTY</span>
-          <span className="text-white font-medium">₹{marketStatus.indices.nifty.value.toLocaleString('en-IN')}</span>
+          <span className="text-muted-foreground">NIFTY</span>
+          <span className="text-foreground font-medium">₹{marketStatus.indices.nifty.value.toLocaleString('en-IN')}</span>
           <div className={`flex items-center ${marketStatus.indices.nifty.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {marketStatus.indices.nifty.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
             <span className="ml-1">
@@ -93,8 +93,8 @@ export const MarketStatusWidget = () => {
         </div>
         
         <div className="flex items-center space-x-1">
-          <span className="text-slate-400">SENSEX</span>
-          <span className="text-white font-medium">₹{marketStatus.indices.sensex.value.toLocaleString('en-IN')}</span>
+          <span className="text-muted-foreground">SENSEX</span>
+          <span className="text-foreground font-medium">₹{marketStatus.indices.sensex.value.toLocaleString('en-IN')}</span>
           <div className={`flex items-center ${marketStatus.indices.sensex.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
             {marketStatus.indices.sensex.change >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
             <span className="ml-1">
