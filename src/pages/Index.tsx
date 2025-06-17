@@ -11,6 +11,7 @@ import { NewsFeed } from "@/components/dashboard/NewsFeed";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { MessageCircle } from "lucide-react";
 
 const Index = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -46,21 +47,34 @@ const Index = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Hero Section */}
         <DashboardHero />
+        
+        {/* AI Search Box */}
         <AISearchBox />
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <StockTicker />
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Stock Ticker */}
+          <div className="lg:col-span-2">
+            <StockTicker />
+          </div>
+          
+          {/* Right Column - Sentiment & News */}
           <div className="space-y-6">
             <SentimentAnalysis />
             <NewsFeed />
           </div>
         </div>
         
-        <div className="fixed bottom-6 right-6">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6 py-3 shadow-lg">
-            Ask AI Anything
+        {/* Floating AI Chat Button */}
+        <div className="fixed bottom-6 right-6 z-50">
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700 text-white rounded-full w-14 h-14 shadow-lg hover:shadow-xl transition-all duration-200"
+            size="icon"
+          >
+            <MessageCircle className="w-6 h-6" />
           </Button>
         </div>
       </div>
