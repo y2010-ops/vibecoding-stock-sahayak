@@ -21,27 +21,27 @@ export function NewsFeed() {
     },
   ];
 
-  const getSentimentColor = (sentiment: string) => {
+  const getSentimentStyle = (sentiment: string) => {
     switch (sentiment) {
-      case "Positive": return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-      case "Negative": return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-      default: return "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300";
+      case "Positive": return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+      case "Negative": return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+      default: return "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
     }
   };
 
   return (
     <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
       <CardHeader>
-        <CardTitle className="text-slate-900 dark:text-white">News Feed</CardTitle>
+        <CardTitle className="text-lg font-semibold text-slate-900 dark:text-white">News Feed</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {news.map((item, index) => (
           <div key={index} className="space-y-2">
-            <div className="flex items-start justify-between">
-              <h3 className="text-sm font-medium text-slate-900 dark:text-white leading-tight">
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="text-sm text-slate-900 dark:text-white leading-tight flex-1">
                 {item.title}
               </h3>
-              <Badge className={getSentimentColor(item.sentiment)}>
+              <Badge className={`text-xs px-2 py-1 ${getSentimentStyle(item.sentiment)}`}>
                 {item.sentiment}
               </Badge>
             </div>
