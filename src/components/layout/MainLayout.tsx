@@ -11,7 +11,7 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-slate-50 dark:bg-slate-900">
+      <div className="min-h-screen flex w-full bg-gray-50">
         <AppSidebar />
         <div className="flex-1 flex flex-col">
           <TopNavigation />

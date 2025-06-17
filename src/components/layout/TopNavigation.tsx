@@ -5,15 +5,15 @@ import { User, Settings } from "lucide-react";
 
 export function TopNavigation() {
   return (
-    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-6 py-3">
+    <header className="bg-white border-b border-gray-200 px-6 py-4 relative z-10">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-8">
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">StockMind</h1>
+          <h1 className="text-2xl font-bold text-gray-900">StockMind</h1>
           <nav className="hidden md:flex items-center space-x-6">
-            <a href="/" className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm font-medium">Home</a>
-            <a href="/dashboard" className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm font-medium">Dashboard</a>
-            <a href="/ai-chat" className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm font-medium">AI Chat</a>
-            <a href="/watchlist" className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-sm font-medium">Watchlist</a>
+            <a href="/" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Home</a>
+            <a href="/dashboard" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Dashboard</a>
+            <a href="/ai-chat" className="text-gray-600 hover:text-gray-900 text-sm font-medium">AI Chat</a>
+            <a href="/watchlist" className="text-gray-600 hover:text-gray-900 text-sm font-medium">Watchlist</a>
           </nav>
         </div>
         
