@@ -14,7 +14,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="dark" storageKey="stockmind-theme">
+    <ThemeProvider defaultTheme="light" storageKey="stockmind-theme">
       <TooltipProvider>
         <div className="min-h-screen w-full">
           <Toaster />
@@ -24,6 +24,10 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/ai-chat" element={<AIChat />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/watchlist" element={<Index />} />
+              <Route path="/alerts" element={<Index />} />
+              <Route path="/sentiment" element={<Index />} />
+              <Route path="/news" element={<Index />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
